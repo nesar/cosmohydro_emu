@@ -120,7 +120,7 @@ for z in emu.redshifts:          # or any z in emu.z_range
 
 ### Power spectra
 
-The full-hydro matter power spectrum is not emulated directly; it is the product of the emulated suppression ratio and the gravity-only spectrum (as used in the CosmoHydro inference against KiDS-Legacy $P_m$):
+The full-hydro matter power spectrum is not emulated directly; it is the product of the emulated suppression ratio and the gravity-only spectrum:
 
 ```python
 ratio, _ = load_emulator('Pk-ratio').predict(params, z=0.45)      # P_hydro / P_grav
