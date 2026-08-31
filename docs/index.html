@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CosmoHydro Emulator - Multi-redshift emulation of astrophysical and cosmological summary statistics from the CRK-HACC CosmoHydro simulation suite">
+    <meta name="keywords" content="cosmology, emulator, gaussian process, hydrodynamics, simulations, astrophysics, baryonic feedback">
+    <meta name="author" content="Nesar Ramachandra">
+    <title>CosmoHydro Emulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo">cosmohydro_emu</span>
+            </div>
+            <div class="nav-links">
+                <a href="#statistics">Statistics</a>
+                <a href="#parameters">Parameters</a>
+                <a href="#installation">Installation</a>
+                <a href="#usage">Usage</a>
+                <a href="#api">API</a>
+                <a href="https://github.com/nesar/cosmohydro_emu" target="_blank" class="github-link">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 0.5rem;">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>CosmoHydro Emulator</h1>
+            <p class="subtitle">Multi-redshift emulation of astrophysical and cosmological summary statistics from hydrodynamical simulations</p>
+            <p class="description">Gaussian Process emulators trained on the CRK-HACC CosmoHydro ensemble: 110 simulations ($L = 400\,h^{-1}\mathrm{Mpc}$) varying 5 subgrid-physics and 2 cosmological parameters, with outputs from $z = 2$ to $z = 0$.</p>
+        </div>
+    </header>
+
+    <main>
+        <section id="statistics" class="section">
+            <div class="container">
+                <h2>Available Summary Statistics</h2>
+                <p class="model-info">Every statistic is emulated at each stored snapshot; predictions at any redshift in between are linearly interpolated between the two bracketing snapshot emulators.</p>
+
+                <h3>Summary statistics (5 subgrid + 2 cosmology parameters)</h3>
+                <div class="stats-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Redshifts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>GSMF</code></td>
+                                <td>Galaxy stellar mass function</td>
+                                <td>$\mathrm{d}n / \mathrm{d}\log_{10} M_{\ast}$ $[(h^{-1}\mathrm{Mpc})^{-3}]$</td>
+                                <td>11 snapshots, $z = 0 - 2$</td>
+                            </tr>
+                            <tr>
+                                <td><code>HMF</code></td>
+                                <td>Halo mass function</td>
+                                <td>$\mathrm{d}n / \mathrm{d}\log_{10} M$ $[(h^{-1}\mathrm{Mpc})^{-3}]$</td>
+                                <td>11 snapshots, $z = 0 - 2$</td>
+                            </tr>
+                            <tr>
+                                <td><code>fGas</code></td>
+                                <td>Cluster gas fraction</td>
+                                <td>$M_{\mathrm{gas}} / M_{\mathrm{500c}}$ $[&lt;R_{\mathrm{500c}}]$</td>
+                                <td>7 snapshots, $z = 0 - 1$</td>
+                            </tr>
+                            <tr>
+                                <td><code>Pk</code></td>
+                                <td>Matter power spectrum suppression</td>
+                                <td>$P_{\mathrm{hydro}}(k) / P_{\mathrm{grav}}(k)$</td>
+                                <td>$z = 0,\, 0.1,\, 0.5,\, 1,\, 2$</td>
+                            </tr>
+                            <tr>
+                                <td><code>CSFR</code></td>
+                                <td>Cosmic star formation history</td>
+                                <td>$\mathrm{CSFR}(a)$ $[\mathrm{M}_{\odot}\,\mathrm{yr}^{-1}\,(h^{-1}\mathrm{Mpc})^{-3}]$</td>
+                                <td>$z = 0$ output (full history in $a$)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="plot-container">
+                    <img src="assets/summary_statistics.png" alt="Summary statistic predictions at z = 0" />
+                    <p class="caption">Example predictions of the summary statistics (and the gravity-only power spectrum) at $z = 0$ with $\pm 2\sigma$ emulator uncertainty</p>
+                </div>
+
+                <h3>Cluster profiles (5 subgrid + 2 cosmology parameters, $z = 0 - 0.5$)</h3>
+                <p class="model-info">Stacked radial profiles as a function of $r / R_{500c}$, emulated at 5 snapshots.</p>
+                <div class="stats-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>CGD</code></td><td>Cluster gas density</td><td>$\rho_{\mathrm{gas}} / \rho_{\mathrm{crit}}$</td></tr>
+                            <tr><td><code>CGED</code></td><td>Cluster gas electron density</td><td>$n_{\mathrm{e}}$ $[\mathrm{cm}^{-3}]$</td></tr>
+                            <tr><td><code>CPP</code></td><td>Cluster gas pressure</td><td>$P / P_{500}$</td></tr>
+                            <tr><td><code>CTP</code></td><td>Cluster gas temperature</td><td>$T / T_{500}$</td></tr>
+                            <tr><td><code>CEP</code></td><td>Cluster gas entropy</td><td>$K / K_{500}$</td></tr>
+                            <tr><td><code>CEEP</code></td><td>Cluster electron entropy</td><td>$K_{\mathrm{e}} / K_{500}$</td></tr>
+                            <tr><td><code>CMP</code></td><td>Cluster gas metallicity</td><td>$Z / Z_{\odot}$</td></tr>
+                            <tr><td><code>CYP</code></td><td>Cluster Compton-$y$ (tSZ)</td><td>$y_{\mathrm{SZ}}$</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="plot-container">
+                    <img src="assets/cluster_profiles.png" alt="Cluster profile predictions at z = 0" />
+                    <p class="caption">Example predictions of the eight cluster profiles at $z = 0$</p>
+                </div>
+
+                <h3>Gravity-only statistics (2 cosmology parameters)</h3>
+                <div class="stats-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Quantity</th>
+                                <th>Redshifts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Pk_GO</code></td>
+                                <td>Gravity-only matter power spectrum</td>
+                                <td>$P_{\mathrm{grav}}(k)$ $[(h^{-1}\mathrm{Mpc})^{3}]$</td>
+                                <td>$z = 0,\, 0.1,\, 0.5,\, 1,\, 2$</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Redshift evolution</h3>
+                <div class="plot-container">
+                    <img src="assets/redshift_evolution.png" alt="Redshift evolution of GSMF, HMF and CGD" />
+                    <p class="caption">One parameter set evaluated at every trained snapshot of the GSMF, HMF and gas-density-profile emulators</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="parameters" class="section section-alt">
+            <div class="container">
+                <h2>Input Parameters</h2>
+                <div class="params-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Symbol</th>
+                                <th>Range</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>kappa_w</code></td><td>$\kappa_\mathrm{w}$</td><td>(2.0, 4.0)</td><td>AGN wind coupling</td></tr>
+                            <tr><td><code>e_w</code></td><td>$e_\mathrm{w}$</td><td>(0.2, 1.0)</td><td>AGN energy efficiency</td></tr>
+                            <tr><td><code>M_seed</code></td><td>$M_\mathrm{seed}/10^{6}$</td><td>(0.6, 2.0)</td><td>Black hole seed mass (in $10^6\,M_\odot$)</td></tr>
+                            <tr><td><code>v_kin</code></td><td>$v_\mathrm{kin}/10^{4}$</td><td>(0.1, 1.2)</td><td>Kinetic feedback velocity (in $10^4$ km/s)</td></tr>
+                            <tr><td><code>epsilon_kin</code></td><td>$\epsilon_\mathrm{kin}/10^{1}$</td><td>(0.02, 1.2)</td><td>Kinetic feedback efficiency (in $10^1$)</td></tr>
+                            <tr><td><code>omega_m</code></td><td>$\omega_\mathrm{m} = \Omega_\mathrm{m} h^2$</td><td>(0.12, 0.155)</td><td>Physical matter density</td></tr>
+                            <tr><td><code>sigma_8</code></td><td>$\sigma_8$</td><td>(0.7, 0.9)</td><td>Amplitude of matter fluctuations</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note"><strong>Note:</strong> Parameters must be provided in the scaled units shown above, in this order. <code>Pk_GO</code> takes only $[\omega_\mathrm{m}, \sigma_8]$. The project fiducial cosmology is $\omega_\mathrm{m} = 0.14176$, $\sigma_8 = 0.8102$. Inputs outside the training box trigger a <code>RuntimeWarning</code>.</p>
+            </div>
+        </section>
+
+        <section id="installation" class="section">
+            <div class="container">
+                <h2>Installation</h2>
+                <div class="code-block">
+                    <code>git clone https://github.com/nesar/cosmohydro_emu.git
+cd cosmohydro_emu
+pip install -e .</code>
+                </div>
+                <p class="requirements"><strong>Requirements:</strong> Python ≥ 3.9, &lt; 3.12 | NumPy | SciPy | <a href="https://github.com/lanl/SEPIA" style="color: var(--accent);">SEPIA</a> | Matplotlib (optional, plotting)</p>
+            </div>
+        </section>
+
+        <section id="usage" class="section section-alt">
+            <div class="container">
+                <h2>Quick Start</h2>
+
+                <h3>Basic Usage</h3>
+                <div class="code-block">
+                    <code><span class="keyword">from</span> cosmohydro_emu <span class="keyword">import</span> load_emulator, get_x_grid
+
+<span class="comment"># Load the Galaxy Stellar Mass Function emulator (11 snapshots, z = 0-2)</span>
+emu = load_emulator(<span class="string">'GSMF'</span>)
+<span class="builtin">print</span>(emu.redshifts)
+
+<span class="comment"># [kappa_w, e_w, M_seed/1e6, v_kin/1e4, eps_kin/1e1, omega_m, sigma_8]</span>
+params = [<span class="number">3.0</span>, <span class="number">0.5</span>, <span class="number">1.0</span>, <span class="number">0.65</span>, <span class="number">0.5</span>, <span class="number">0.14176</span>, <span class="number">0.8102</span>]
+
+<span class="comment"># Predict at z = 0.3 (interpolated between trained snapshots)</span>
+mean, std = emu.predict(params, z=<span class="number">0.3</span>)
+
+<span class="comment"># Get the x-axis values</span>
+x_grid, x_label = get_x_grid(<span class="string">'GSMF'</span>)
+
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+plt.plot(x_grid, mean, label=<span class="string">'Prediction'</span>)
+plt.fill_between(x_grid, mean - <span class="number">2</span>*std, mean + <span class="number">2</span>*std, alpha=<span class="number">0.3</span>, label=<span class="string">r'$\pm 2\sigma$'</span>)
+plt.xscale(<span class="string">'log'</span>)
+plt.yscale(<span class="string">'log'</span>)
+plt.xlabel(x_label)
+plt.ylabel(<span class="string">'GSMF'</span>)
+plt.legend()
+plt.show()</code>
+                </div>
+
+                <h3>Redshift Evolution</h3>
+                <div class="code-block">
+                    <code>emu = load_emulator(<span class="string">'HMF'</span>)
+
+<span class="keyword">for</span> z <span class="keyword">in</span> emu.redshifts:          <span class="comment"># or any z inside emu.z_range</span>
+    mean, std = emu.predict(params, z=z)</code>
+                </div>
+
+                <h3>Gravity-Only Power Spectrum</h3>
+                <div class="code-block">
+                    <code>emu_go = load_emulator(<span class="string">'Pk_GO'</span>)
+pk_grav, _ = emu_go.predict([<span class="number">0.14176</span>, <span class="number">0.8102</span>], z=<span class="number">0.5</span>)   <span class="comment"># P(k) in (Mpc/h)^3</span>
+
+<span class="comment"># Hydro P(k) = suppression ratio x gravity-only P(k)</span>
+ratio, _ = load_emulator(<span class="string">'Pk'</span>).predict(params, z=<span class="number">0.5</span>)
+pk_hydro = ratio * pk_grav</code>
+                </div>
+
+                <h3>Batch Predictions</h3>
+                <div class="code-block">
+                    <code><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+params_batch = np.random.uniform(
+    low=[<span class="number">2.0</span>, <span class="number">0.2</span>, <span class="number">0.6</span>, <span class="number">0.1</span>, <span class="number">0.02</span>, <span class="number">0.12</span>, <span class="number">0.7</span>],
+    high=[<span class="number">4.0</span>, <span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">1.2</span>, <span class="number">1.2</span>, <span class="number">0.155</span>, <span class="number">0.9</span>],
+    size=(<span class="number">10</span>, <span class="number">7</span>),
+)
+mean, std = emu.predict(params_batch, z=<span class="number">0.5</span>)                 <span class="comment"># shape (n_x, 10)</span>
+mean, std = emu.predict(params_batch, z=np.linspace(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>))  <span class="comment"># one z per row</span></code>
+                </div>
+
+                <h3>List Available Statistics</h3>
+                <div class="code-block">
+                    <code><span class="keyword">from</span> cosmohydro_emu <span class="keyword">import</span> list_available_statistics, get_redshifts
+
+stats = list_available_statistics()
+<span class="builtin">print</span>(stats[<span class="string">'summary'</span>], stats[<span class="string">'profile'</span>], stats[<span class="string">'gravity_only'</span>])
+<span class="builtin">print</span>(get_redshifts(<span class="string">'fGas'</span>))</code>
+                </div>
+            </div>
+        </section>
+
+        <section id="api" class="section">
+            <div class="container">
+                <h2>API Reference</h2>
+
+                <div class="api-function">
+                    <h3><code>load_emulator(stat_name, redshifts=None, exp_variance=None)</code></h3>
+                    <p>Load the emulator for one summary statistic (all trained snapshots by default).</p>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>stat_name</code> (str): Name of the summary statistic</li>
+                        <li><code>redshifts</code> (array-like, optional): Subset of trained snapshot redshifts to load</li>
+                        <li><code>exp_variance</code> (float or int, optional): Override the PCA basis size; by default read from each trained model file</li>
+                    </ul>
+                    <p><strong>Returns:</strong> <code>CosmoHydroEmulator</code> object</p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>CosmoHydroEmulator.predict(params, z=0.0, check_bounds=True)</code></h3>
+                    <p>Predict the statistic for given parameters at redshift <code>z</code>.</p>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>params</code> (array-like): <code>(n_params,)</code> for one prediction or <code>(n_pred, n_params)</code> for a batch</li>
+                        <li><code>z</code> (float or array-like): Redshift inside <code>emu.z_range</code>; a per-row array is accepted for batches</li>
+                        <li><code>check_bounds</code> (bool): Warn when parameters lie outside the training design</li>
+                    </ul>
+                    <p><strong>Returns:</strong> <code>(mean, std)</code> in physical units on <code>emu.x_grid</code>; shape <code>(n_x,)</code> or <code>(n_x, n_pred)</code></p>
+                    <p><strong>Attributes:</strong> <code>stat_name</code>, <code>n_params</code>, <code>param_names</code>, <code>redshifts</code>, <code>z_range</code>, <code>x_grid</code>, <code>n_pc</code></p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>list_available_statistics()</code></h3>
+                    <p>Dictionary of statistic names grouped by <code>'summary'</code>, <code>'profile'</code> and <code>'gravity_only'</code>.</p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_x_grid(stat_name)</code></h3>
+                    <p>Independent-variable grid the emulator is defined on.</p>
+                    <p><strong>Returns:</strong> <code>(x_grid, x_label)</code></p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_redshifts(stat_name)</code></h3>
+                    <p>Trained snapshot redshifts of a statistic (ascending).</p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_plot_info(stat_name)</code></h3>
+                    <p>Plotting information (title, labels, scales).</p>
+                    <p><strong>Returns:</strong> Dictionary with <code>'title'</code>, <code>'xlabel'</code>, <code>'ylabel'</code>, <code>'xscale'</code>, <code>'yscale'</code></p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_valid_range(stat_name)</code></h3>
+                    <p>Recommended range of the independent variable.</p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_parameter_info(stat_name=None)</code></h3>
+                    <p>Parameter names, LaTeX names, ranges, descriptions, scalings and fiducial values (restricted to the parameters of <code>stat_name</code> if given).</p>
+                </div>
+
+                <div class="api-function">
+                    <h3><code>get_statistic_info(stat_name=None)</code></h3>
+                    <p>Summary of one or all statistics: title, category, number of parameters, redshifts and grid size.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-alt">
+            <div class="container">
+                <h2>Citation</h2>
+                <div class="code-block">
+                    <code>@software{cosmohydro_emu,
+  author = {Ramachandra, Nesar},
+  title = {CosmoHydro Emulator: Multi-redshift emulation of summary statistics from hydrodynamical simulations},
+  year = {2026},
+  url = {https://github.com/nesar/cosmohydro_emu}
+}</code>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Nesar Ramachandra |
+                <a href="https://github.com/nesar/cosmohydro_emu">GitHub</a> |
+                <a href="https://github.com/nesar/cosmohydro_emu/issues">Issues</a> |
+                <a href="https://github.com/nesar/cosmohydro_emu/blob/main/README.md">Documentation</a> |
+                <a href="https://github.com/nesar/subgrid_emu">subgrid_emu</a> |
+                MIT License
+            </p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

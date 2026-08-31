@@ -1,0 +1,16 @@
+# Include package data
+include README.md
+include LICENSE
+include requirements.txt
+include pytest.ini
+
+# Include data and model files
+recursive-include cosmohydro_emu/data *.npz
+recursive-include cosmohydro_emu/models *.pkl
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *.swo

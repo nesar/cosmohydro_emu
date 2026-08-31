@@ -1,0 +1,14 @@
+# GitHub Pages Configuration for cosmohydro_emu
+
+# Theme (not used since we have custom HTML/CSS)
+theme: null
+
+# Include files
+include:
+  - index.html
+  - styles.css
+  - script.js
+
+# Exclude files
+exclude:
+  - README.md
