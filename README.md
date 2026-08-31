@@ -1,6 +1,6 @@
 # Emulator suite for summary statistics from the simulations with varying subgrid and cosmological physics.
 
-A Python package for fast, multi-redshift emulation of astrophysical and cosmological summary statistics trained on the CRK-HACC **CosmoHydro** simulation ensemble, which varies **5 subgrid-physics parameters and 2 cosmological parameters** simultaneously.
+A Python package for fast, multi-redshift emulation of astrophysical and cosmological summary statistics trained on a CRK-HACC simulation ensemble, which varies **5 subgrid-physics parameters and 2 cosmological parameters** simultaneously.
 
 ## Overview
 
@@ -57,8 +57,8 @@ The exact snapshot redshifts of any statistic are available via `get_redshifts(s
 
 **Notes**
 - Parameters must be provided in the scaled units shown above, in this order. `Pk_GO` takes only `[omega_m, sigma_8]`.
-- The project fiducial cosmology is $\omega_\mathrm{m} = 0.14176$, $\sigma_8 = 0.8102$ (`FIDUCIAL_COSMOLOGY`).
-- Predictions outside the training box raise a `RuntimeWarning` (disable with `check_bounds=False`).
+- The fiducial cosmology is $\omega_\mathrm{m} = 0.14176$, $\sigma_8 = 0.8102$ (`FIDUCIAL_COSMOLOGY`).
+- Predictions outside the training box raise a `RuntimeWarning`.
 
 ## Installation
 
