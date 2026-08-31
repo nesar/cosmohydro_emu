@@ -228,4 +228,4 @@ cosmohydro_emu/
 └── docs/                   # GitHub Pages site
 ```
 
-Training, inference/MCMC codes are not provided here; this package only deploys the trained emulators.
+This package only deploys the trained emulators. Training, inference/MCMC codes are not provided. 
