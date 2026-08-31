@@ -85,7 +85,7 @@ STATISTICS = {
         x_description=r'Halo mass $M_{500c}$ [$h^{-1} M_\odot$]',
         valid_range=(10**13.5, 10**14.3),
     ),
-    'Pk': dict(
+    'Pk-ratio': dict(
         category='summary',
         param_set='subgrid+cosmo',
         output_transform=None,

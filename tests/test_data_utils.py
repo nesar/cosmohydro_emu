@@ -43,7 +43,7 @@ class TestDataUtilities:
         assert len(get_redshifts('HMF')) == 11
         assert len(get_redshifts('fGas')) == 7
         assert len(get_redshifts('CGD')) == 5
-        assert len(get_redshifts('Pk')) == 5
+        assert len(get_redshifts('Pk-ratio')) == 5
         assert len(get_redshifts('CSFR')) == 1
         assert get_redshifts('GSMF').max() == pytest.approx(2.0, abs=0.01)
         assert get_redshifts('CGD').max() == pytest.approx(0.5, abs=0.01)

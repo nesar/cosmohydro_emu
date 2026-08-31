@@ -22,7 +22,7 @@ Summary statistics (7 parameters):
 - GSMF : galaxy stellar mass function            (z = 0 -- 2)
 - HMF  : halo mass function                      (z = 0 -- 2)
 - fGas : cluster gas fraction                    (z = 0 -- 1)
-- Pk   : matter power spectrum suppression ratio (z = 0, 0.1, 0.5, 1, 2)
+- Pk-ratio : matter power spectrum suppression ratio (z = 0, 0.1, 0.5, 1, 2)
 - CSFR : cosmic star formation history           (z = 0 output, history in a)
 
 Cluster profiles (7 parameters, z = 0 -- 0.5):

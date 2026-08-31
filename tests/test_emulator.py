@@ -74,7 +74,7 @@ class TestEmulatorLoading:
 
     def test_n_pc_read_from_pickle(self, emulators):
         # PCA basis size must come from the saved model, not a default
-        assert emulators['Pk'].n_pc == [1, 1, 1, 1, 1]
+        assert emulators['Pk-ratio'].n_pc == [1, 1, 1, 1, 1]
         assert emulators['Pk_GO'].n_pc == [2, 2, 2, 2, 2]
 
 
@@ -131,8 +131,8 @@ class TestEmulatorPredictions:
 
     def test_reproduces_training_data(self, emulators):
         """At a training design point the emulator should return ~the training curve."""
-        emu = emulators['Pk']
-        d = np.load(get_data_path('Pk'))
+        emu = emulators['Pk-ratio']
+        d = np.load(get_data_path('Pk-ratio'))
         k0 = int(np.argmin(np.abs(d['redshifts'] - 0.0)))
         truth = d['y_vals'][:3, k0, :]
         mean, _ = emu.predict(d['p_train'][:3], z=0.0)

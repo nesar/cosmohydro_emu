@@ -94,7 +94,7 @@
                                 <td>7 snapshots, $z = 0 - 1$</td>
                             </tr>
                             <tr>
-                                <td><code>Pk</code></td>
+                                <td><code>Pk-ratio</code></td>
                                 <td>Matter power spectrum suppression</td>
                                 <td>$P_{\mathrm{hydro}}(k) / P_{\mathrm{grav}}(k)$</td>
                                 <td>$z = 0,\, 0.1,\, 0.5,\, 1,\, 2$</td>
@@ -111,7 +111,7 @@
 
                 <div class="plot-container">
                     <img src="assets/summary_statistics.png" alt="Summary statistic predictions at z = 0" />
-                    <p class="caption">Example predictions of the summary statistics (and the gravity-only power spectrum) at $z = 0$ with $\pm 2\sigma$ emulator uncertainty</p>
+                    <p class="caption">Example predictions of the summary statistics at $z = 0$ with $\pm 2\sigma$ emulator uncertainty</p>
                 </div>
 
                 <h3>Cluster profiles (5 subgrid + 2 cosmology parameters, $z = 0 - 0.5$)</h3>
@@ -163,6 +163,13 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <h3>Power spectra</h3>
+                <p class="model-info">The full-hydro matter power spectrum is not emulated directly: it is the product of the emulated suppression ratio <code>Pk-ratio</code> and the gravity-only spectrum <code>Pk_GO</code>, $P_{\mathrm{hydro}}(k,z) = [P_{\mathrm{hydro}}/P_{\mathrm{grav}}](k,z) \times P_{\mathrm{grav}}(k,z)$.</p>
+                <div class="plot-container">
+                    <img src="assets/power_spectra.png" alt="Suppression ratio, gravity-only and derived hydro power spectra" />
+                    <p class="caption">Suppression ratio and gravity-only $P(k)$ (emulated) and the derived full-hydro $P(k)$ at trained (solid) and interpolated (dashed) redshifts</p>
                 </div>
 
                 <h3>Redshift evolution</h3>
@@ -258,8 +265,8 @@ plt.show()</code>
                     <code>emu_go = load_emulator(<span class="string">'Pk_GO'</span>)
 pk_grav, _ = emu_go.predict([<span class="number">0.14176</span>, <span class="number">0.8102</span>], z=<span class="number">0.5</span>)   <span class="comment"># P(k) in (Mpc/h)^3</span>
 
-<span class="comment"># Hydro P(k) = suppression ratio x gravity-only P(k)</span>
-ratio, _ = load_emulator(<span class="string">'Pk'</span>).predict(params, z=<span class="number">0.5</span>)
+<span class="comment"># Full-hydro P(k) is not emulated directly: suppression ratio x gravity-only P(k)</span>
+ratio, _ = load_emulator(<span class="string">'Pk-ratio'</span>).predict(params, z=<span class="number">0.5</span>)
 pk_hydro = ratio * pk_grav</code>
                 </div>
 

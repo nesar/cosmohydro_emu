@@ -17,7 +17,7 @@ Compared to [`subgrid_emu`](https://github.com/nesar/subgrid_emu) (5 subgrid par
 | GSMF | $\mathrm{d}n / \mathrm{d}\log_{10} M_{\ast} \; [(h^{-1}\mathrm{Mpc})^{-3}]$ | Galaxy stellar mass function | 11 snapshots, $z = 0 - 2$ |
 | HMF | $\mathrm{d}n / \mathrm{d}\log_{10} M \; [(h^{-1}\mathrm{Mpc})^{-3}]$ | Halo mass function | 11 snapshots, $z = 0 - 2$ |
 | fGas | $M_{\mathrm{gas}} / M_{\mathrm{500c}} \quad [<R_{\mathrm{500c}}]$ | Cluster gas fraction | 7 snapshots, $z = 0 - 1$ |
-| Pk | $P_{\mathrm{hydro}}(k) / P_{\mathrm{grav}}(k)$ | Matter power spectrum suppression | $z = 0, 0.1, 0.5, 1, 2$ |
+| Pk-ratio | $P_{\mathrm{hydro}}(k) / P_{\mathrm{grav}}(k)$ | Matter power spectrum suppression | $z = 0, 0.1, 0.5, 1, 2$ |
 | CSFR | $\mathrm{CSFR} \; [\mathrm{M}_{\odot}\,\mathrm{yr}^{-1}\,(h^{-1}\mathrm{Mpc})^{-3}]$ | Cosmic star formation history vs. scale factor $a$ | $z = 0$ output (full history) |
 
 ### Cluster profiles (5 subgrid + 2 cosmology parameters, $z = 0 - 0.5$, 5 snapshots)
@@ -118,6 +118,18 @@ for z in emu.redshifts:          # or any z in emu.z_range
 
 ![redshift evolution](docs/assets/redshift_evolution.png)
 
+### Power spectra
+
+The full-hydro matter power spectrum is not emulated directly; it is the product of the emulated suppression ratio and the gravity-only spectrum (as used in the CosmoHydro inference against KiDS-Legacy $P_m$):
+
+```python
+ratio, _ = load_emulator('Pk-ratio').predict(params, z=0.45)      # P_hydro / P_grav
+p_grav, _ = load_emulator('Pk_GO').predict(params[5:], z=0.45)    # P_grav(k) in (Mpc/h)^3
+p_hydro = ratio * p_grav
+```
+
+![power spectra](docs/assets/power_spectra.png)
+
 
 ### Batch predictions
 
@@ -196,7 +208,7 @@ Summary of one or all statistics: title, category, number of parameters, redshif
 ## Output conventions
 
 - `GSMF` and `HMF` are returned as $\mathrm{d}n/\mathrm{d}\log_{10}M$ in $(h^{-1}\mathrm{Mpc})^{-3}$; `Pk_GO` as $P(k)$ in $(h^{-1}\mathrm{Mpc})^3$. Internally these emulators work on transformed targets and the returned standard deviations are propagated with the delta method.
-- `Pk` returns the ratio of the full-hydro to gravity-only total matter power spectrum on $k \in [2\pi/L, k_{\rm Nyquist}] = [0.016, 8.0]\,h\,\mathrm{Mpc}^{-1}$.
+- `Pk-ratio` returns the ratio of the full-hydro to gravity-only total matter power spectrum on $k \in [2\pi/L, k_{\rm Nyquist}] = [0.016, 8.0]\,h\,\mathrm{Mpc}^{-1}$.
 - `CSFR` returns the star-formation-rate density as a function of scale factor `a` (the x-grid) from a single $z=0$ output; redshift interpolation does not apply.
 
 ## Package layout

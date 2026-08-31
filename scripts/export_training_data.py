@@ -161,7 +161,7 @@ def export_pk(cosmohydro):
             src = os.path.join(cosmohydro, 'models', 'Pk_multivariate_model_z_index0.pkl')
         else:
             src = os.path.join(cosmohydro, 'models', 'Pk_cosmo', f'ratio_z{ztag}.pkl')
-        copy_model(src, 'Pk', zi)
+        copy_model(src, 'Pk-ratio', zi)
         copy_model(os.path.join(cosmohydro, 'models', 'Pk_cosmo', f'logP_go_z{ztag}.pkl'),
                    'Pk_GO', zi)
 
@@ -171,7 +171,7 @@ def export_pk(cosmohydro):
 
     common = dict(y_ind=k_ref, z_index_range=np.arange(len(PK_ZTAGS)),
                   redshifts=np.array(zs), snapshot_ids=np.full(len(PK_ZTAGS), -1))
-    save_npz('Pk', p_train=design[TRAIN_IDX], y_vals=np.stack(ratio_y, axis=1),
+    save_npz('Pk-ratio', p_train=design[TRAIN_IDX], y_vals=np.stack(ratio_y, axis=1),
              param_names=PARAM_NAMES, **common)
     save_npz('Pk_GO', p_train=design[TRAIN_IDX][:, COSMO_COLS], y_vals=np.stack(go_y, axis=1),
              param_names=PARAM_NAMES[COSMO_COLS], **common)
