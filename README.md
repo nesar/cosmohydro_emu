@@ -1,12 +1,12 @@
-# Emulator suite for multi-redshift summary statistics from the CosmoHydro simulations
+# Emulator suite for summary statistics from the simulations with varying subgrid and cosmological physics.
 
 A Python package for fast, multi-redshift emulation of astrophysical and cosmological summary statistics trained on the CRK-HACC **CosmoHydro** simulation ensemble, which varies **5 subgrid-physics parameters and 2 cosmological parameters** simultaneously.
 
 ## Overview
 
-This package provides trained Gaussian-Process surrogates that predict summary statistics as a function of subgrid physics *and* cosmology, at any redshift inside the trained range. The emulators were trained on 100 of the 110 hydrodynamical simulations of the CosmoHydro suite ($L = 400\,h^{-1}\mathrm{Mpc}$, $2\times1024^3$ particles), with the remaining 10 held out for validation. Each statistic is emulated independently at every stored snapshot; predictions at intermediate redshifts are linearly interpolated between the two bracketing snapshot emulators.
+This package provides trained Gaussian-Process surrogates that predict summary statistics as a function of subgrid physics *and* cosmology, at any redshift inside the trained range. The emulators were trained on 100 of the 110 hydrodynamical simulations of the CosmoHydro suite ($L = 400\,h^{-1}\mathrm{Mpc}$, $2\times1024^3$ particles), with the remaining 10 held out for validation. Each statistic is emulated independently using GP at every stored snapshot; predictions at intermediate redshifts are linearly interpolated between the two bracketing snapshot emulators.
 
-Compared to [`subgrid_emu`](https://github.com/nesar/subgrid_emu) (5 subgrid parameters, $z=0$ only, smaller boxes) this suite adds cosmology as an input, a much larger simulation volume, more statistics (halo mass function, eight cluster profiles, gravity-only $P(k)$) and redshift evolution.
+Compared to [`subgrid_emu`](https://github.com/nesar/subgrid_emu) (5 subgrid parameters, $z=0$ only, smaller boxes) this suite adds cosmology as an input, a much larger simulation volume, more statistics (halo mass function, eight cluster profiles) and redshift evolution.
 
 ## Available Summary Statistics
 
@@ -118,16 +118,6 @@ for z in emu.redshifts:          # or any z in emu.z_range
 
 ![redshift evolution](docs/assets/redshift_evolution.png)
 
-### Gravity-only power spectrum (cosmology only)
-
-```python
-emu_go = load_emulator('Pk_GO')
-pk_grav, pk_grav_std = emu_go.predict([0.14176, 0.8102], z=0.5)   # P(k) in (Mpc/h)^3
-
-# Hydro P(k) = suppression ratio x gravity-only P(k)
-ratio, _ = load_emulator('Pk').predict(params, z=0.5)
-pk_hydro = ratio * pk_grav
-```
 
 ### Batch predictions
 
@@ -226,4 +216,4 @@ cosmohydro_emu/
 └── docs/                   # GitHub Pages site
 ```
 
-Training, inference and MCMC code live in the separate CosmoHydro project; this package only deploys the trained emulators.
+Training, inference/MCMC codes are not provided here; this package only deploys the trained emulators.
