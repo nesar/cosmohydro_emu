@@ -4,7 +4,7 @@ A Python package for fast, multi-redshift emulation of astrophysical and cosmolo
 
 ## Overview
 
-This package provides trained Gaussian-Process surrogates that predict summary statistics as a function of subgrid physics *and* cosmology, at any redshift inside the trained range. The emulators were trained on 100 of the 110 hydrodynamical simulations of the CosmoHydro suite ($L = 400\,h^{-1}\mathrm{Mpc}$, $2\times1024^3$ particles), with the remaining 10 held out for validation. Each statistic is emulated independently using GP at every stored snapshot; predictions at intermediate redshifts are linearly interpolated between the two bracketing snapshot emulators.
+This package provides trained Gaussian-Process surrogates that predict summary statistics as a function of subgrid physics *and* cosmology, at any redshift inside the trained range. The emulators were trained on 100 of the 110 hydrodynamical simulations of the CosmoHydro suite ($L = 400\,h^{-1}\mathrm{Mpc}$, $2\times1600^3$ particles), with the remaining 10 held out for validation. Each statistic is emulated independently using GP at every stored snapshot; predictions at intermediate redshifts are linearly interpolated between the two bracketing snapshot emulators.
 
 Compared to [`subgrid_emu`](https://github.com/nesar/subgrid_emu) (5 subgrid parameters, $z=0$ only, smaller boxes) this suite adds cosmology as an input, a much larger simulation volume, more statistics (halo mass function, eight cluster profiles) and redshift evolution.
 
