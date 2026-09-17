@@ -24,6 +24,7 @@ Usage (from the repository root):
 """
 
 import argparse
+import json
 import os
 import shutil
 
@@ -47,7 +48,12 @@ MULTIZ_STATS = ['GSMF', 'HMF', 'fGas',
 # P(k) models live at 5 redshift tags; we index them 0..4 in *descending* z
 # to match the HACC snapshot convention used by the multi-z models.
 PK_ZTAGS = ['2.0', '1.0', '0.5', '0.1', '0.0']
-PK_KMIN, PK_KMAX = 0.015707963267948967, 8.042477193189871   # 2pi/L .. Nyquist
+# Trusted k range (400 Mpc/h box, 1600^3 particles; P(k) measured on a
+# 1600^3 FFT mesh, so mesh Nyquist == particle Nyquist). Must match
+# CosmoHydro's mass_conds('Pk'). Same range for ratio and gravity-only.
+PK_KMIN = 0.015707963267948967    # 2*pi/L
+PK_KMAX = 12.566370614359172      # pi/(L/1600): mesh/particle Nyquist
+PK_KMAX_GO = PK_KMAX
 
 
 def fill_nan_with_interpolation(data, kind):
@@ -141,40 +147,49 @@ def _load_pk(pk_dir, ztag):
             Pgo = np.zeros((110, k_ref.size))
         assert np.allclose(h[:, 0], k_ref) and np.allclose(g[:, 0], k_ref)
         P[i], Pgo[i] = h[:, 1], g[:, 1]
-    m = (k_ref > PK_KMIN) & (k_ref < PK_KMAX)
-    return k_ref[m], P[:, m], Pgo[:, m]
+    return k_ref, P, Pgo
 
 
 def export_pk(cosmohydro):
+    """Export the Pk-ratio (k < mesh Nyquist) and Pk_GO (k < 10) emulators.
+
+    All ten pickles (ratio and logP_go at 5 redshift tags each) come from
+    models/Pk_cosmo/, trained by Inference_cosmo/train_pk_emulators.py; each
+    model's _meta.json k grid is asserted against the cut built here, so a
+    stale (pre-retrain) pickle fails loudly instead of exporting mismatched
+    data.
+    """
     pk_dir = os.path.join(cosmohydro, 'data', 'scidac-olcf-pk_3')
+    pk_cosmo = os.path.join(cosmohydro, 'models', 'Pk_cosmo')
     design = load_design(cosmohydro)
     ratio_y, go_y, k_ref, zs = [], [], None, []
+    m_ratio = m_go = None
     for zi, ztag in enumerate(PK_ZTAGS):
         k, P, Pgo = _load_pk(pk_dir, ztag)
         if k_ref is None:
             k_ref = k
+            m_ratio = (k > PK_KMIN) & (k < PK_KMAX)
+            m_go = (k > PK_KMIN) & (k < PK_KMAX_GO)
         assert np.allclose(k, k_ref), f'k grid differs at z={ztag}'
-        ratio_y.append((P / Pgo)[TRAIN_IDX])
-        go_y.append(np.log10(Pgo[TRAIN_IDX]))
+        ratio_y.append((P / Pgo)[TRAIN_IDX][:, m_ratio])
+        go_y.append(np.log10(Pgo[TRAIN_IDX][:, m_go]))
         zs.append(float(ztag))
-        if ztag == '0.0':
-            src = os.path.join(cosmohydro, 'models', 'Pk_multivariate_model_z_index0.pkl')
-        else:
-            src = os.path.join(cosmohydro, 'models', 'Pk_cosmo', f'ratio_z{ztag}.pkl')
-        copy_model(src, 'Pk-ratio', zi)
-        copy_model(os.path.join(cosmohydro, 'models', 'Pk_cosmo', f'logP_go_z{ztag}.pkl'),
-                   'Pk_GO', zi)
+        for quantity, mask, stat in (('ratio', m_ratio, 'Pk-ratio'),
+                                     ('logP_go', m_go, 'Pk_GO')):
+            with open(os.path.join(pk_cosmo, f'{quantity}_z{ztag}_meta.json')) as fh:
+                meta = json.load(fh)
+            assert np.allclose(meta['k'], k[mask]), (
+                f'{quantity} z={ztag}: trained k grid does not match the '
+                f'current cut — retrain with '
+                f'Inference_cosmo/train_pk_emulators.py --retrain')
+            copy_model(os.path.join(pk_cosmo, f'{quantity}_z{ztag}.pkl'), stat, zi)
 
-    # consistency with the notebook-exported z=0 training arrays
-    ref = np.load(os.path.join(cosmohydro, 'models', 'Pk_training_data.npz'))
-    assert np.allclose(ref['y_ind'], k_ref) and np.allclose(ref['y_vals'], ratio_y[-1])
-
-    common = dict(y_ind=k_ref, z_index_range=np.arange(len(PK_ZTAGS)),
+    common = dict(z_index_range=np.arange(len(PK_ZTAGS)),
                   redshifts=np.array(zs), snapshot_ids=np.full(len(PK_ZTAGS), -1))
     save_npz('Pk-ratio', p_train=design[TRAIN_IDX], y_vals=np.stack(ratio_y, axis=1),
-             param_names=PARAM_NAMES, **common)
+             y_ind=k_ref[m_ratio], param_names=PARAM_NAMES, **common)
     save_npz('Pk_GO', p_train=design[TRAIN_IDX][:, COSMO_COLS], y_vals=np.stack(go_y, axis=1),
-             param_names=PARAM_NAMES[COSMO_COLS], **common)
+             y_ind=k_ref[m_go], param_names=PARAM_NAMES[COSMO_COLS], **common)
 
 
 def main():

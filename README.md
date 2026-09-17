@@ -208,7 +208,7 @@ Summary of one or all statistics: title, category, number of parameters, redshif
 ## Output conventions
 
 - `GSMF` and `HMF` are returned as $\mathrm{d}n/\mathrm{d}\log_{10}M$ in $(h^{-1}\mathrm{Mpc})^{-3}$; `Pk_GO` as $P(k)$ in $(h^{-1}\mathrm{Mpc})^3$. Internally these emulators work on transformed targets and the returned standard deviations are propagated with the delta method.
-- `Pk-ratio` returns the ratio of the full-hydro to gravity-only total matter power spectrum on $k \in [2\pi/L, k_{\rm Nyquist}] = [0.016, 8.0]\,h\,\mathrm{Mpc}^{-1}$.
+- `Pk-ratio` and `Pk_GO` are defined on $k \in [2\pi/L, k_{\rm Nyq}] = [0.016, 12.6]\,h\,\mathrm{Mpc}^{-1}$, where $k_{\rm Nyq}$ is the Nyquist frequency of the $1600^3$ particle grid and of the $1600^3$ mesh the spectra were measured on. Near the Nyquist, mass-assignment aliasing affects the absolute spectrum (`Pk_GO`); it largely cancels in the ratio.
 - `CSFR` returns the star-formation-rate density as a function of scale factor `a` (the x-grid) from a single $z=0$ output; redshift interpolation does not apply.
 
 ## Package layout

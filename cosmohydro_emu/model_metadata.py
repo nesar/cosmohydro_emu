@@ -94,7 +94,8 @@ STATISTICS = {
         ylabel=r'$P_{\mathrm{hydro}}(k)\,/\,P_{\mathrm{grav}}(k)$',
         xscale='log', yscale='linear',
         x_description=r'Wavenumber $k$ [$h$/Mpc]',
-        valid_range=(0.015707963267948967, 8.042477193189871),
+        # 2*pi/L to the 1600^3 P(k)-mesh / particle Nyquist
+        valid_range=(0.015707963267948967, 12.566370614359172),
     ),
     'CSFR': dict(
         category='summary',
@@ -206,7 +207,9 @@ STATISTICS = {
         ylabel=r'$P_{\mathrm{grav}}(k) \, [(h^{-1}\mathrm{Mpc})^{3}]$',
         xscale='log', yscale='log',
         x_description=r'Wavenumber $k$ [$h$/Mpc]',
-        valid_range=(0.015707963267948967, 8.042477193189871),
+        # 2*pi/L to the 1600^3 P(k)-mesh / particle Nyquist; mass-assignment
+        # aliasing near the Nyquist (cancels in Pk-ratio) is a known caveat
+        valid_range=(0.015707963267948967, 12.566370614359172),
     ),
 }
 
