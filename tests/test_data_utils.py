@@ -100,3 +100,28 @@ class TestDataUtilities:
                    get_statistic_info, get_parameter_info):
             with pytest.raises(ValueError):
                 fn('INVALID_STAT')
+
+
+class TestTestData:
+    """Held-out (runs 100-109) data must match the training layout."""
+
+    @pytest.mark.parametrize("stat_name", AVAILABLE_STATS)
+    def test_layout_matches_training(self, stat_name):
+        from cosmohydro_emu import get_test_data
+        t = get_test_data(stat_name)
+        x_grid, _ = get_x_grid(stat_name)
+        assert t['params'].shape == (10, len(get_parameter_info(stat_name)['names']))
+        assert t['y'].shape == (10, len(get_redshifts(stat_name)), len(x_grid))
+        assert np.allclose(t['x_grid'], x_grid)
+        assert np.allclose(t['redshifts'], get_redshifts(stat_name))
+        assert np.all(np.isfinite(t['y']))
+
+    @pytest.mark.parametrize("stat_name", AVAILABLE_STATS)
+    def test_same_space_as_emulator(self, stat_name):
+        """Emulator predictions at the test inputs land near the test data."""
+        from cosmohydro_emu import get_test_data, load_emulator
+        t = get_test_data(stat_name)
+        i = len(t['redshifts']) // 2
+        mean, _ = load_emulator(stat_name).predict(t['params'], z=float(t['redshifts'][i]))
+        y = t['y'][:, i, :].T
+        assert np.median(np.abs(mean - y) / np.abs(y)) < 0.5

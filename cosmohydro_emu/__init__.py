@@ -56,6 +56,7 @@ from .model_metadata import (
 
 from .data_utils import (
     get_x_grid,
+    get_test_data,
     get_redshifts,
     get_plot_info,
     get_valid_range,
@@ -83,6 +84,7 @@ __all__ = [
 
     # Data utilities
     'get_x_grid',
+    'get_test_data',
     'get_redshifts',
     'get_plot_info',
     'get_valid_range',

@@ -16,6 +16,13 @@ Per statistic the ``.npz`` contains
     snapshot_ids   (n_z,)                   HACC snapshot number (or -1 if n/a)
     param_names    (n_params,)              plain-text parameter names
 
+and ``<STAT>_test_data.npz`` holds the 10 held-out simulations (runs 100-109),
+with exactly the same preprocessing, grid and snapshot selection:
+
+    p_test         (10, n_params)
+    y_vals         (10, n_z, n_y)
+    y_ind, z_index_range, redshifts, snapshot_ids, param_names   as above
+
 Snapshots are stored in the order of ``z_index_range``; the package sorts by
 redshift itself.
 
@@ -40,7 +47,8 @@ SEED_MASS_SCALE, VKIN_SCALE, EPS_SCALE = 1e6, 1e4, 1e1
 PARAM_NAMES = np.array(['kappa_w', 'e_w', 'M_seed/1e6', 'v_kin/1e4',
                         'eps_kin/1e1', 'omega_m', 'sigma_8'])
 COSMO_COLS = [5, 6]
-TRAIN_IDX = np.arange(100)            # runs 000-099; 100-109 held out
+TRAIN_IDX = np.arange(100)            # runs 000-099 (training)
+TEST_IDX = np.arange(100, 110)        # runs 100-109 (held out)
 
 MULTIZ_STATS = ['GSMF', 'HMF', 'fGas',
                 'CGD', 'CGED', 'CPP', 'CTP', 'CEP', 'CEEP', 'CMP', 'CYP']
@@ -77,13 +85,22 @@ def load_design(cosmohydro):
     return p
 
 
-def save_npz(stat, **payload):
+def save_npz(stat, test=None, **payload):
+    """Write the training file; ``test=(p_test, y_test)`` also writes the test file."""
     path = os.path.join(DATA_OUT, f'{stat}_training_data.npz')
     np.savez_compressed(path, **payload)
     y = payload['y_vals']
     assert not np.isnan(y).any(), f'{stat}: NaNs in exported training data'
     print(f'  {stat:6s} data   -> {os.path.relpath(path)}  y_vals {y.shape}  '
           f'z = {np.round(payload["redshifts"], 3).tolist()}')
+    if test is not None:
+        p_test, y_test = test
+        assert not np.isnan(y_test).any(), f'{stat}: NaNs in exported test data'
+        assert y_test.shape[1:] == y.shape[1:] and p_test.shape[1:] == payload['p_train'].shape[1:]
+        tpath = os.path.join(DATA_OUT, f'{stat}_test_data.npz')
+        np.savez_compressed(tpath, p_test=p_test, y_vals=y_test,
+                            **{k: v for k, v in payload.items() if k not in ('p_train', 'y_vals')})
+        print(f'  {stat:6s} test   -> {os.path.relpath(tpath)}  y_vals {y_test.shape}')
 
 
 def copy_model(src, stat, z_index):
@@ -109,7 +126,8 @@ def export_multiz(cosmohydro):
                  z_index_range=zi,
                  redshifts=d['redshifts'][zi],
                  snapshot_ids=d['snapshot_ids'][zi],
-                 param_names=PARAM_NAMES)
+                 param_names=PARAM_NAMES,
+                 test=(d['p_test'], d['y_test'][:, zi, :]))
 
 
 def export_csfr(cosmohydro):
@@ -126,8 +144,10 @@ def export_csfr(cosmohydro):
     cond = np.where((a >= 0.0) & (a <= 1.0))[0]
     copy_model(os.path.join(cosmohydro, 'models', 'CSFR_multivariate_model_z_index0.pkl'),
                'CSFR', 0)
+    design = load_design(cosmohydro)
     save_npz('CSFR',
-             p_train=load_design(cosmohydro)[TRAIN_IDX],
+             test=(design[TEST_IDX], arr[TEST_IDX][:, None, cond]),
+             p_train=design[TRAIN_IDX],
              y_vals=arr[TRAIN_IDX][:, None, cond],
              y_ind=a[cond],
              z_index_range=np.array([0]),
@@ -163,6 +183,7 @@ def export_pk(cosmohydro):
     pk_cosmo = os.path.join(cosmohydro, 'models', 'Pk_cosmo')
     design = load_design(cosmohydro)
     ratio_y, go_y, k_ref, zs = [], [], None, []
+    ratio_t, go_t = [], []
     m_ratio = m_go = None
     for zi, ztag in enumerate(PK_ZTAGS):
         k, P, Pgo = _load_pk(pk_dir, ztag)
@@ -173,6 +194,8 @@ def export_pk(cosmohydro):
         assert np.allclose(k, k_ref), f'k grid differs at z={ztag}'
         ratio_y.append((P / Pgo)[TRAIN_IDX][:, m_ratio])
         go_y.append(np.log10(Pgo[TRAIN_IDX][:, m_go]))
+        ratio_t.append((P / Pgo)[TEST_IDX][:, m_ratio])
+        go_t.append(np.log10(Pgo[TEST_IDX][:, m_go]))
         zs.append(float(ztag))
         for quantity, mask, stat in (('ratio', m_ratio, 'Pk-ratio'),
                                      ('logP_go', m_go, 'Pk_GO')):
@@ -186,9 +209,11 @@ def export_pk(cosmohydro):
 
     common = dict(z_index_range=np.arange(len(PK_ZTAGS)),
                   redshifts=np.array(zs), snapshot_ids=np.full(len(PK_ZTAGS), -1))
-    save_npz('Pk-ratio', p_train=design[TRAIN_IDX], y_vals=np.stack(ratio_y, axis=1),
+    save_npz('Pk-ratio', test=(design[TEST_IDX], np.stack(ratio_t, axis=1)),
+             p_train=design[TRAIN_IDX], y_vals=np.stack(ratio_y, axis=1),
              y_ind=k_ref[m_ratio], param_names=PARAM_NAMES, **common)
-    save_npz('Pk_GO', p_train=design[TRAIN_IDX][:, COSMO_COLS], y_vals=np.stack(go_y, axis=1),
+    save_npz('Pk_GO', test=(design[TEST_IDX][:, COSMO_COLS], np.stack(go_t, axis=1)),
+             p_train=design[TRAIN_IDX][:, COSMO_COLS], y_vals=np.stack(go_y, axis=1),
              y_ind=k_ref[m_go], param_names=PARAM_NAMES[COSMO_COLS], **common)
 
 

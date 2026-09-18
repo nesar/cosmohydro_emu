@@ -220,7 +220,7 @@ cosmohydro_emu/
 │   ├── data_utils.py       # get_x_grid, get_redshifts, get_plot_info, get_parameter_info, ...
 │   ├── model_metadata.py   # registry of statistics, parameters, labels, output transforms
 │   ├── plot_routines.py    # optional matplotlib helpers
-│   ├── data/               # <STAT>_training_data.npz  (design, training targets, grid, redshifts)
+│   ├── data/               # <STAT>_training_data.npz (100 training sims) and <STAT>_test_data.npz (10 held-out sims)
 │   └── models/<STAT>/      # multivariate_model_z_index<i>.pkl  (trained SEPIA models)
 ├── examples/basic_usage.ipynb
 ├── scripts/export_training_data.py   # regenerates data/ and models/ from the CosmoHydro project

@@ -5,6 +5,8 @@ Information about the independent variables (x-grids), the trained
 redshifts, plotting labels and the input parameters of each statistic.
 """
 
+import os
+
 import numpy as np
 
 from .emulator import get_data_path
@@ -21,6 +23,53 @@ from .model_metadata import (
 def _load(stat_name):
     d = np.load(get_data_path(stat_name), allow_pickle=False)
     return {k: d[k] for k in d.files}
+
+
+def get_test_data(stat_name, physical=True):
+    """
+    Load the 10 held-out simulations (runs 100-109) of a summary statistic.
+
+    They are built by the same preprocessing as the training set
+    (``get_data_path(stat_name)``), on the same x-grid and snapshots, and were
+    never used to train the emulator.
+
+    Parameters
+    ----------
+    stat_name : str
+    physical : bool, optional
+        If True (default) apply the emulator's output transform, so ``y`` is
+        directly comparable to ``emulator.predict``.  If False, return the raw
+        training-space values stored in the file.
+
+    Returns
+    -------
+    dict
+        ``'params'`` (10, n_params) scaled inputs, ``'y'`` (10, n_z, n_x),
+        ``'x_grid'`` (n_x,), ``'redshifts'`` (n_z,) ascending.
+
+    Examples
+    --------
+    >>> t = get_test_data('GSMF')
+    >>> mean, std = load_emulator('GSMF').predict(t['params'], z=t['redshifts'][0])
+    >>> # compare mean.T with t['y'][:, 0, :]
+    """
+    meta = get_stat_metadata(stat_name)
+    path = os.path.join(os.path.dirname(get_data_path(stat_name)),
+                        f'{stat_name}_test_data.npz')
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Test data not found: {path}")
+    with np.load(path, allow_pickle=False) as d:
+        d = {k: d[k] for k in d.files}
+    order = np.argsort(d['redshifts'])
+    y = d['y_vals'][:, order, :]
+    if physical:
+        t = meta['output_transform']
+        if t == 'log10':
+            y = np.log10(y)
+        elif t == 'pow10':
+            y = 10.0 ** y
+    return {'params': d['p_test'], 'y': y, 'x_grid': d['y_ind'],
+            'redshifts': d['redshifts'][order]}
 
 
 def get_x_grid(stat_name):
